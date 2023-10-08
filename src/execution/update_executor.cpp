@@ -23,6 +23,9 @@ UpdateExecutor::UpdateExecutor(ExecutorContext *exec_ctx, const UpdatePlanNode *
 
 void UpdateExecutor::Init() { throw NotImplementedException("UpdateExecutor is not implemented"); }
 
-auto UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool { return false; }
+auto UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool { 
+    //LOG_INFO("");
+    return false; 
+}
 
 }  // namespace bustub

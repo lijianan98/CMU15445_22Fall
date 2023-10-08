@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "common/rid.h"
+#include "concurrency/transaction.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/index_scan_plan.h"
@@ -42,7 +43,12 @@ class IndexScanExecutor : public AbstractExecutor {
   auto Next(Tuple *tuple, RID *rid) -> bool override;
 
  private:
-  /** The index scan plan node to be executed. */
-  const IndexScanPlanNode *plan_;
+    /** The index scan plan node to be executed. */
+    const IndexScanPlanNode *plan_;
+    index_oid_t index_id_;
+    IndexInfo *index_info_;
+    TableInfo *table_info_;
+    BPlusTreeIndexForOneIntegerColumn *b_tree_index_;
+    BPlusTreeIndexIteratorForOneIntegerColumn index_iterator_;
 };
 }  // namespace bustub

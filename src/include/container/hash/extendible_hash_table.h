@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <sys/types.h>
 #include <list>
 #include <memory>
 #include <mutex>  // NOLINT
@@ -143,7 +144,6 @@ class ExtendibleHashTable : public HashTable<K, V> {
      * @return True if the key exists, false otherwise.
      */
     auto Remove(const K &key) -> bool;
-
     /**
      *
      * TODO(P1): Add implementation
@@ -167,7 +167,6 @@ class ExtendibleHashTable : public HashTable<K, V> {
  private:
   // TODO(student): You may add additional private members and helper functions and remove the ones
   // you don't need.
-
   int global_depth_;    // The global depth of the directory
   size_t bucket_size_;  // The size of a bucket
   int num_buckets_;     // The number of buckets in the hash table

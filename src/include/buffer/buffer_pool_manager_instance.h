@@ -53,6 +53,17 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   auto GetPages() -> Page * { return pages_; }
 
  protected:
+    /**
+     * Helper function 1
+     */
+    auto SearchFromFreeList(frame_id_t *frame_id) -> bool;
+
+    /**
+     * Helper function 2
+     */
+    auto SearchFromReplacer(frame_id_t *frame_id)-> bool;
+    
+
   /**
    * TODO(P1): Add implementation
    *
