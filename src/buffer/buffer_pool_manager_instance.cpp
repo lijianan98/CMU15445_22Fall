@@ -101,7 +101,9 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
     if (is_fetched) {
         this->replacer_->RecordAccess(frame_id);
         this->pages_[frame_id].pin_count_++;
-        return this->pages_ + frame_id;    
+        // have to set evictable status!
+        this->replacer_->SetEvictable(frame_id, false);
+        return this->pages_ + frame_id;   
     }
     bool is_from_replacer = false;
     if (SearchFromFreeList(&frame_id) || (is_from_replacer = SearchFromReplacer(&frame_id))) {                                                        
@@ -119,7 +121,7 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
         this->pages_[frame_id].ResetMemory();
         this->pages_[frame_id].is_dirty_ = false;                        
         this->pages_[frame_id].page_id_ = page_id;                      
-        this->pages_[frame_id].pin_count_++;
+        this->pages_[frame_id].pin_count_ = 1;
         // record access for lru-K and set evictable status              
         this->replacer_->RecordAccess(frame_id);
         this->replacer_->SetEvictable(frame_id, false);

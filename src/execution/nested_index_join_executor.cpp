@@ -42,25 +42,14 @@ void NestIndexJoinExecutor::Init() {
 auto NestIndexJoinExecutor::Next(Tuple *tuple, RID *rid) -> bool { 
     //Tuple left_tuple{};
     while (idx_ != 0 || child_executor_->Next(&left_tuple_, rid)) {
-        //Tuple key = left_tuple_.KeyFromTuple(table_info_->schema_, index_info_->key_schema_, index_info_->index_->GetKeyAttrs());
-        //Tuple key = left_tuple_.KeyFromTuple(child_executor_->GetOutputSchema(), );
+        // key predicate is used to extract the join key from the child (left table)
+        Value value = plan_->KeyPredicate()->Evaluate(&left_tuple_, child_executor_->GetOutputSchema());
+        b_tree_index_->ScanKey(Tuple{{value}, index_info_->index_->GetKeySchema()}, &results_, exec_ctx_->GetTransaction());
         
-        //plan_->key_predicate_->Evaluate(&left_tuple_, child_executor_->GetOutputSchema());
-        
-        //b_tree_index_->ScanKey(key, &results_, exec_ctx_->GetTransaction());
-
-        std::vector<Value> key_values{};
-        for (size_t i = 0; i < index_info_->key_schema_.GetColumnCount(); ++i) {
-            key_values.push_back(plan_->KeyPredicate()->Evaluate(&left_tuple_, child_executor_->GetOutputSchema()));
-        }
-        b_tree_index_->ScanKey(Tuple(key_values, &index_info_->key_schema_), &results_, exec_ctx_->GetTransaction());
-
-        
-        //LOG_INFO("size = %ld, key = %s", results_.size(), key.GetData());
         std::vector<Value> values{};
         values.reserve(GetOutputSchema().GetColumnCount());
         // left join
-        if (plan_->join_type_ == JoinType::LEFT && results_.size() == 0) {
+        if (plan_->join_type_ == JoinType::LEFT && results_.empty()) {
             for (uint32_t j = 0; j < child_executor_->GetOutputSchema().GetColumnCount(); j++) {
                 values.push_back(left_tuple_.GetValue(&child_executor_->GetOutputSchema(), j));
             }
@@ -70,13 +59,16 @@ auto NestIndexJoinExecutor::Next(Tuple *tuple, RID *rid) -> bool {
             *tuple = Tuple(values, &GetOutputSchema());
             return true;
         }
-        // get right tuple
+        // get right tuple for normal part, if empty, skip
+        if (results_.empty()) { 
+            continue;
+        }
         Tuple right_tuple{};
         table_info_->table_->GetTuple(results_[idx_], &right_tuple, exec_ctx_->GetTransaction(), true);
         if (++idx_ == results_.size()) {
             idx_ = 0;
             results_.clear();
-            BUSTUB_ASSERT(results_.size() == 0, "RID results vector size should be 0");
+            BUSTUB_ASSERT(results_.empty(), "RID results vector size should be 0");
         }
         // normal inner join
         //if (true == plan_->key_predicate_->EvaluateJoin(&left_tuple_, child_executor_->GetOutputSchema(), &right_tuple, table_info_->schema_).GetAs<bool>()) {
