@@ -27,7 +27,6 @@ DeleteExecutor::DeleteExecutor(ExecutorContext *exec_ctx, const DeletePlanNode *
 
 void DeleteExecutor::Init() { 
     child_executor_->Init();
-    // throw NotImplementedException("DeleteExecutor is not implemented"); 
 }
 
 auto DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool { 

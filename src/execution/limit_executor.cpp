@@ -22,7 +22,9 @@ LimitExecutor::LimitExecutor(ExecutorContext *exec_ctx, const LimitPlanNode *pla
     child_executor_(std::move(child_executor)),
     fetched_(0) {}
 
-void LimitExecutor::Init() {}
+void LimitExecutor::Init() {
+    child_executor_->Init();
+}
 
 auto LimitExecutor::Next(Tuple *tuple, RID *rid) -> bool {
     if (fetched_ < plan_->limit_ && child_executor_->Next(tuple, rid)) {

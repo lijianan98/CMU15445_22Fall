@@ -9,6 +9,7 @@ TopNExecutor::TopNExecutor(ExecutorContext *exec_ctx, const TopNPlanNode *plan,
     : AbstractExecutor(exec_ctx),
     plan_(plan),
     child_executor_(std::move(child_executor)) {
+        child_executor_->Init();
         Tuple child_tuple{};
         RID rid{};
         auto compare_func = [&](std::pair<Tuple, RID> &pair1, std::pair<Tuple, RID> &pair2) -> bool {
@@ -29,7 +30,7 @@ TopNExecutor::TopNExecutor(ExecutorContext *exec_ctx, const TopNPlanNode *plan,
         //LOG_INFO("TopN is called");
         std::priority_queue<std::pair<Tuple, RID>, std::vector<std::pair<Tuple, RID>>, decltype(compare_func)> pq(compare_func);
         while (child_executor_->Next(&child_tuple, &rid)) {
-            LOG_INFO("one tuple got");
+            //LOG_INFO("one tuple got");
             pq.emplace(child_tuple, rid);
             if (pq.size() > plan_->n_) {
                 pq.pop();
@@ -39,7 +40,7 @@ TopNExecutor::TopNExecutor(ExecutorContext *exec_ctx, const TopNPlanNode *plan,
             results_.push(pq.top());
             pq.pop();
         }
-        LOG_INFO("size = %ld", results_.size());
+        //LOG_INFO("size = %ld", results_.size());
         idx_ = 0;
     }
 

@@ -35,8 +35,7 @@ NestIndexJoinExecutor::NestIndexJoinExecutor(ExecutorContext *exec_ctx, const Ne
 }
 
 void NestIndexJoinExecutor::Init() {
-    //LOG_INFO("predicate = %s", plan_->key_predicate_->ToString().data());
-    //plan_->key_predicate_->Evaluate()
+    child_executor_->Init();
 }
 
 auto NestIndexJoinExecutor::Next(Tuple *tuple, RID *rid) -> bool { 

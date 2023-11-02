@@ -26,9 +26,7 @@ IndexScanExecutor::IndexScanExecutor(ExecutorContext *exec_ctx, const IndexScanP
     b_tree_index_(dynamic_cast<BPlusTreeIndexForOneIntegerColumn *> (index_info_->index_.get())), 
     index_iterator_(b_tree_index_->GetBeginIterator()) {}
 
-void IndexScanExecutor::Init() { 
-    //throw NotImplementedException("IndexScanExecutor is not implemented"); 
-}
+void IndexScanExecutor::Init() {}
 
 auto IndexScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
     std::vector<Value> values{};
