@@ -64,7 +64,7 @@ class LockManager {
   class LockRequestQueue {
    public:
     /** List of lock requests for the same resource (table or row) */
-    std::list<LockRequest *> request_queue_;
+    std::list<std::shared_ptr<LockRequest>> request_queue_;
     /** For notifying blocked transactions on this rid */
     std::condition_variable cv_;
     /** txn_id of an upgrading transaction (if any) */
@@ -233,6 +233,29 @@ class LockManager {
   auto UnlockTable(Transaction *txn, const table_oid_t &oid) -> bool;
 
   /**
+   * This method should be called for lock granting or
+   * upgrade (only for case that currently held lock is different from wanted lock)
+   * 
+   * now check whether wanted lock follows 2PL and isolation level
+   * throw exception for inappropriate lock mode
+   * See lock note hints 
+   */
+  auto CheckLockRequest(Transaction *txn, LockMode lock_mode) -> void;
+
+  /**
+   * This method is used to try granting lock (upgrade serves similar purpose)
+   * 
+   * Upgrading is top priority, then FIFO 
+   * 
+   */
+  auto TryGrantLock(Transaction *txn, LockMode lock_mode, const std::shared_ptr<LockRequestQueue> &lock_queue_ptr) -> bool;
+
+  /**
+   * Helper method to check lock compatability
+   */
+  auto IsCompatible(LockMode l_mode, LockMode r_mode) -> bool;
+
+  /**
    * Acquire a lock on rid in the given lock_mode.
    * If the transaction already holds a lock on the row, upgrade the lock
    * to the specified lock_mode (if possible).
@@ -296,6 +319,12 @@ class LockManager {
    * Runs cycle detection in the background.
    */
   auto RunCycleDetection() -> void;
+
+
+  auto DFSHelper(std::unordered_set<txn_id_t> &visited, txn_id_t id, txn_id_t *txn_id) -> bool;
+
+  template <typename Keytype>
+  auto ConstructGraph(std::unordered_map<Keytype, std::shared_ptr<LockRequestQueue>> &lock_map) -> void;
 
  private:
   /** Fall 2022 */

@@ -27,9 +27,18 @@ DeleteExecutor::DeleteExecutor(ExecutorContext *exec_ctx, const DeletePlanNode *
 
 void DeleteExecutor::Init() { 
     child_executor_->Init();
+
+    Catalog *catalog = exec_ctx_->GetCatalog();
+    TableInfo *table_info = catalog->GetTable(plan_->table_oid_);
+    auto txn = exec_ctx_->GetTransaction();
+    // get IX table lock for all isolation levels
+    bool lock_table_res = exec_ctx_->GetLockManager()->LockTable(txn, LockManager::LockMode::INTENTION_EXCLUSIVE, table_info->oid_);
+    if (!lock_table_res) {
+        throw ExecutionException("delete lock table IX failed");
+    }
 }
 
-auto DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool { 
+auto DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool {
     if (finished_) {
         return false;
     }
@@ -47,6 +56,13 @@ auto DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool {
             finished_ = true;
             break;
         }
+
+        // add tuple lock, however, no need to update txn write set here, as InsertTuple already handles this part
+        bool lock_tuple_res = exec_ctx_->GetLockManager()->LockRow(txn, LockManager::LockMode::EXCLUSIVE, table_info->oid_, *rid);
+        if (!lock_tuple_res) {
+            throw ExecutionException("delete lock tuple X fail");
+        }
+
         //LOG_INFO("to_delete_rid = %s, child_tuple = %s, rid = %s", rid->ToString().data(), child_tuple.ToString(&table_info->schema_).data(), rid->ToString().data());
         bool delete_result = table_info->table_->MarkDelete(*rid, txn);
         if (!delete_result) {   // if tuple does not exist
